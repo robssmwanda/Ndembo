@@ -8,6 +8,12 @@ router.get("/", async (req, res) => {
   try {
     const data = await getFinishedMatches();
 
+    console.log("FINISHED RESPONSE :", {
+      hasData: !!data,
+      hasDataArray: Array.isArray(data?.data),
+      length: data?.data?.length,
+    });
+
     const matches = data.data.map(mapFinishedMatch);
 
     res.json(matches);
@@ -20,5 +26,6 @@ router.get("/", async (req, res) => {
     });
   }
 });
+
 
 export default router;

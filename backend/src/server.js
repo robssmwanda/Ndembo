@@ -5,6 +5,7 @@ import upcomingRoutes from "./routes/upcoming.route.js";
 import finishedRoutes from "./routes/finished.route.js";
 import matchRoutes from "./routes/match.route.js";
 import competitionRoutes from "./routes/competition.route.js";
+import teamRoutes from "./routes/team.route.js";
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ app.use("/api/upcoming", upcomingRoutes);
 app.use("/api/finished", finishedRoutes);
 app.use("/api/matches", matchRoutes);
 app.use("/api/competitions", competitionRoutes);
+app.use("/api/teams", teamRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Ndembo server is running on port ${PORT}.`);

@@ -64,11 +64,13 @@ router.get("/", async (req, res) => {
   }
 });
 
+
 router.get("/:id/standings", async (req, res) => {
   try {
     const { id } = req.params;
+    const season = Number(req.query.season);
 
-    const data = await getCompetitionStandings(id);
+    const data = await getCompetitionStandings(id, season);
 
     res.json(data);
   } catch (error) {
@@ -80,6 +82,7 @@ router.get("/:id/standings", async (req, res) => {
     });
   }
 });
+
 
 router.get("/:id", async (req, res) => {
   try {

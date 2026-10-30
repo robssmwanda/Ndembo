@@ -1,16 +1,15 @@
 import express from "express";
-import { getUpcomingMatches } from "../services/football.service.js";
-import { mapUpcomingMatch } from "../services/match.mapper.js";
+import { getMatchesByDate } from "../services/football.service.js";
 
 const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
-    const data = await getUpcomingMatches();
+    const today = new Date().toISOString().split("T")[0];
 
-    const matches = data.data.map(mapUpcomingMatch);
+    const result = await getMatchesByDate(today);
 
-    res.json(matches);
+    res.json(result.data);
   } catch (error) {
     console.error("Erreur API football :", error);
 
