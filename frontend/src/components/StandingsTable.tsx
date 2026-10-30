@@ -50,8 +50,8 @@ export function StandingsTable({ rows, compact = false }: StandingsTableProps) {
                   </div>
                 </td>
                 <td className="py-2.5 px-3">
-                  <Link to={`/competitions`} className="flex items-center gap-2 group">
-                    <TeamLogo name={row.team.name} shortName={row.team.shortName} size="sm" />
+                  <Link to={`/teams/${row.team.id}`} className="flex items-center gap-2 group">
+                    <TeamLogo name={row.team.name} shortName={row.team.shortName} logo={row.team.logo} size="sm"/>
                     <span className="text-ndembo-text truncate group-hover:text-ndembo-neon transition-colors hidden sm:inline">
                       {row.team.name}
                     </span>

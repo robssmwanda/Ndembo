@@ -130,7 +130,7 @@ export function SettingsPage() {
             <div>
               <label className="text-sm text-ndembo-text block mb-2">Intervalle d'actualisation</label>
               <div className="flex items-center gap-2 flex-wrap">
-                {[15, 30, 60, 120].map(sec => (
+                {[10, 15, 30, 60, 120].map(sec => (
                   <button
                     key={sec}
                     onClick={() => updateSettings({ refreshInterval: sec })}

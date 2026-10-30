@@ -13,6 +13,7 @@ import { StandingsTable } from '@/components/StandingsTable';
 import { fetchStandings } from '@/lib/api';
 import { formatDateLong, formatTime, statusLabel } from '@/lib/format';
 import type { Match, Standings, StatItem } from '@/types';
+import LoadingState from '@/components/LoadingState';
 
 type TabKey = 'overview' | 'statistics' | 'lineups' | 'standings';
 
@@ -25,38 +26,78 @@ export function MatchDetailsPage() {
   const [standings, setStandings] = useState<Standings | undefined>(undefined);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-        const result = await fetchMatchById(id!, controller.signal);
-        setMatch(result.data);
-        if (result.data?.competition) {
-          const standingsResult = await fetchStandings(result.data.competition.id, controller.signal);
-          setStandings(standingsResult.data ?? undefined);
-        }
-      } catch (err) {
-        if (!(err instanceof DOMException && err.name === 'AbortError')) {
-          setError('Failed to load match details');
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-    return () => controller.abort();
-  }, [id, refreshKey]);
+      useEffect(() => {
+      const controller = new AbortController();
+      let cancelled = false;
 
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        <div className="skeleton h-48 rounded-2xl" />
-        <LoadingSkeleton variant="list" count={5} />
-      </div>
-    );
-  }
+      async function load() {
+        setLoading(true);
+        setError(null);
+
+        try {
+          const result = await fetchMatchById(id!, controller.signal);
+
+          // La requête n'est plus active
+          if (cancelled) return;
+
+          console.log("🧩 RESULT MATCH DETAILS :", result);
+
+          if (!result.data) {
+            setMatch(null);
+            setError("Failed to load match details");
+            return;
+          }
+
+          setMatch(result.data);
+
+          if (result.data.competition) {
+            console.log(
+              "🏆 CHARGEMENT STANDINGS →",
+              result.data.competition.id
+            );
+
+            const standingsResult = await fetchStandings(
+              result.data.competition.id,
+              result.data.competition.season,
+              controller.signal
+            );
+
+            if (!cancelled) {
+              setStandings(standingsResult.data ?? undefined);
+            }
+          }
+        } catch (err) {
+          if (
+            err instanceof DOMException &&
+            err.name === "AbortError"
+          ) {
+            return;
+          }
+
+          if (!cancelled) {
+            console.error("❌ MATCH DETAILS ERROR :", err);
+            setError("Failed to load match details");
+          }
+        } finally {
+          // Très important :
+          // une ancienne requête annulée ne doit pas modifier loading
+          if (!cancelled) {
+            setLoading(false);
+          }
+        }
+      }
+
+      load();
+
+      return () => {
+        cancelled = true;
+        controller.abort();
+      };
+    }, [id, refreshKey]);
+
+      if (loading) {
+        return <LoadingState />;
+      }
 
   if (error) {
     return <ErrorState message={error} onRetry={() => setRefreshKey(k => k + 1)} />;
@@ -105,7 +146,7 @@ export function MatchDetailsPage() {
           <div className="flex items-center justify-center gap-6 lg:gap-12">
             {/* Home team */}
             <div className="flex flex-col items-center gap-3 flex-1 max-w-[200px]">
-              <TeamLogo name={match.homeTeam.name} shortName={match.homeTeam.shortName} size="lg" />
+              <TeamLogo name={match.homeTeam.name} shortName={match.homeTeam.shortName} logo={match.homeTeam.logo} size="lg"/>
               <span className="text-sm lg:text-base font-semibold text-ndembo-text text-center leading-tight">{match.homeTeam.name}</span>
             </div>
 
@@ -130,11 +171,22 @@ export function MatchDetailsPage() {
 
             {/* Away team */}
             <div className="flex flex-col items-center gap-3 flex-1 max-w-[200px]">
-              <TeamLogo name={match.awayTeam.name} shortName={match.awayTeam.shortName} size="lg" />
-              <span className="text-sm lg:text-base font-semibold text-ndembo-text text-center leading-tight">{match.awayTeam.name}</span>
+              <TeamLogo
+                name={match.awayTeam.name}
+                shortName={match.awayTeam.shortName}
+                logo={match.awayTeam.logo}
+                size="lg"
+              />
+              <span className="text-sm lg:text-base font-semibold text-ndembo-text text-center leading-tight">
+                {match.awayTeam.name}
+              </span>
             </div>
           </div>
-
+          
+          <MatchCountdown
+            kickoff={match.kickoff}
+            status={match.status}
+          />
           <div className="flex items-center justify-center mt-5">
             <FavoriteButton
               id={match.id}
@@ -174,6 +226,77 @@ export function MatchDetailsPage() {
     </div>
   );
 }
+
+
+
+function MatchCountdown({
+  kickoff,
+  status,
+}: {
+  kickoff: Match['kickoff'];
+  status: Match['status'];
+}) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (status !== 'upcoming') return;
+
+    const interval = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [status]);
+
+  const kickoffDate = new Date(kickoff);
+
+  if (Number.isNaN(kickoffDate.getTime())) return null;
+
+  const today = new Date(now);
+
+  const isToday =
+    kickoffDate.getFullYear() === today.getFullYear() &&
+    kickoffDate.getMonth() === today.getMonth() &&
+    kickoffDate.getDate() === today.getDate();
+
+  if (!isToday || status !== 'upcoming') return null;
+
+  const remaining = Math.max(0, kickoffDate.getTime() - now);
+
+  const hours = Math.floor(remaining / 3600000);
+  const minutes = Math.floor((remaining % 3600000) / 60000);
+  const seconds = Math.floor((remaining % 60000) / 1000);
+
+  const pad = (value: number) => String(value).padStart(2, '0');
+
+  return (
+    <div className="mt-6 rounded-xl border border-ndembo-neon/20 bg-ndembo-neon/5 p-4 text-center">
+      <p className="text-xs font-semibold uppercase tracking-widest text-ndembo-muted mb-3">
+        COUP D'ENVOI DANS
+      </p>
+
+      <div className="flex items-center justify-center gap-3">
+        {[hours, minutes, seconds].map((value, index) => (
+          <div key={index} className="flex flex-col items-center">
+            <span className="text-3xl lg:text-4xl font-bold font-mono tabular-nums text-ndembo-neon">
+              {pad(value)}
+            </span>
+            <span className="text-[9px] uppercase tracking-wider text-ndembo-muted mt-1">
+              {['Heures', 'Minutes', 'Secondes'][index]}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {remaining === 0 && (
+        <p className="text-xs text-ndembo-neon mt-3 font-semibold">
+          COUP D'ENVOI IMMINENT
+        </p>
+      )}
+    </div>
+  );
+}
+
 
 function OverviewTab({ match }: { match: Match }) {
   if (!match.events || match.events.length === 0) {
@@ -238,6 +361,30 @@ function EventIcon({ type }: { type: string }) {
 }
 
 function StatisticsTab({ match }: { match: Match }) {
+    function translateStatisticLabel(label: string) {
+        const translations: Record<string, string> = {
+          "goals_prevented": "Buts évités",
+          "Shots on Goal": "Tirs cadrés",
+          "Shots off Goal": "Tirs non cadrés",
+          "Total Shots": "Tirs totaux",
+          "Blocked Shots": "Tirs bloqués",
+          "Shots insidebox": "Tirs dans la surface",
+          "Shots outsidebox": "Tirs hors de la surface",
+          "Fouls": "Fautes",
+          "Corner Kicks": "Corners",
+          "Offsides": "Hors-jeu",
+          "Ball Possession": "Possession du ballon",
+          "Yellow Cards": "Cartons jaunes",
+          "Red Cards": "Cartons rouges",
+          "Goalkeeper Saves": "Arrêts du gardien",
+          "Total passes": "Passes totales",
+          "Passes accurate": "Passes réussies",
+          "Passes %": "Précision des passes",
+          "expected_goals": "Buts attendus",
+        };
+
+        return translations[label] ?? label;
+      }
   if (!match.statistics || match.statistics.items.length === 0) {
     return (
       <EmptyState
@@ -255,6 +402,7 @@ function StatisticsTab({ match }: { match: Match }) {
         {match.statistics.items.map((stat: StatItem, idx) => {
           const homeVal = typeof stat.home === 'string' ? parseInt(stat.home) : stat.home;
           const awayVal = typeof stat.away === 'string' ? parseInt(stat.away) : stat.away;
+          console.log("📊 STAT LABEL :", stat.label);
           const total = (homeVal || 0) + (awayVal || 0) || 1;
           const homePct = ((homeVal || 0) / total) * 100;
           const awayPct = 100 - homePct;
@@ -263,7 +411,7 @@ function StatisticsTab({ match }: { match: Match }) {
             <div key={idx}>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-sm font-mono font-bold text-ndembo-text tabular-nums">{stat.home}</span>
-                <span className="text-xs text-ndembo-muted uppercase tracking-wide">{stat.label}</span>
+                <span className="text-xs text-ndembo-muted uppercase tracking-wide">{translateStatisticLabel(stat.label)}</span>
                 <span className="text-sm font-mono font-bold text-ndembo-text tabular-nums">{stat.away}</span>
               </div>
               <div className="flex items-center gap-1 h-2 rounded-full overflow-hidden bg-ndembo-border/30">
@@ -297,7 +445,12 @@ function LineupsTab({ match }: { match: Match }) {
         return (
           <div key={side}>
             <div className="flex items-center gap-2 mb-3">
-              <TeamLogo name={team.name} shortName={team.shortName} size="sm" />
+              <TeamLogo
+                name={team.name}
+                shortName={team.shortName}
+                logo={team.logo}
+                size="lg"
+              />
               <span className="text-sm font-semibold text-ndembo-text">{team.name}</span>
               <span className="text-xs text-ndembo-muted ml-auto">{lineup.formation}</span>
             </div>

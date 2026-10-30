@@ -58,6 +58,10 @@ export function MatchFilters({
           <input
             type="date"
             value={date || ''}
+             min={new Date().toISOString().split('T')[0]}
+             max={new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split('T')[0]}
             onChange={(e) => onDateChange(e.target.value)}
             className="bg-ndembo-card border border-ndembo-border rounded-lg px-3 py-1.5 text-xs text-ndembo-text focus:outline-none focus:border-ndembo-neon/50"
           />

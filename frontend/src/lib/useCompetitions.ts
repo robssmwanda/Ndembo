@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Competition } from "@/types";
-import { fetchPopularCompetitions } from "./api";
+import { fetchPopularCompetitions, fetchCountries } from "./api";
 
 export function useCompetitions() {
   const [countries, setCountries] = useState<any[]>([]);
@@ -16,29 +16,47 @@ export function useCompetitions() {
       setError(null);
 
       try {
-        const popularResult = await fetchPopularCompetitions(signal);
+        const [popularResult, countriesResult] = await Promise.all([
+          fetchPopularCompetitions(signal),
+          fetchCountries(signal),
+        ]);
 
         if (popularResult.error) {
           throw new Error(popularResult.error);
         }
 
-        setPopularCompetitions(popularResult.data ?? []);
+        if (countriesResult.error) {
+          throw new Error(countriesResult.error);
+        }
 
-        // Pour l'instant, on ne recharge plus /countries.
-        // Cela évite un appel API supplémentaire.
-        setCountries([]);
-      } catch (err) {
-        if (err instanceof DOMException && err.name === "AbortError") {
+        // Ne pas mettre à jour l'état si la requête a été annulée
+        if (signal?.aborted) {
           return;
         }
 
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Impossible de récupérer les compétitions.",
-        );
+        setPopularCompetitions(popularResult.data ?? []);
+        setCountries(countriesResult.data ?? []);
+      } catch (err) {
+        // Une requête annulée n'est pas une vraie erreur
+        if (
+          err instanceof DOMException &&
+          err.name === "AbortError"
+        ) {
+          return;
+        }
+
+        if (!signal?.aborted) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Impossible de récupérer les compétitions.",
+          );
+        }
       } finally {
-        setLoading(false);
+        // Une requête annulée ne doit pas arrêter le loading
+        if (!signal?.aborted) {
+          setLoading(false);
+        }
       }
     },
     [],

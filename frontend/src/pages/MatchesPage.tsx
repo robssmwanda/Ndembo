@@ -1,5 +1,6 @@
 
 import { useState, useMemo } from 'react';
+import { fetchMatchesByDate } from '@/lib/api';
 import { useSearchParams } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
 import { useMatches } from '@/lib/useMatches';
@@ -15,6 +16,29 @@ import type { Match, MatchStatus } from '@/types';
 type TabKey = 'live' | 'upcoming' | 'finished';
 
 export function MatchesPage() {
+   
+  const now = new Date();
+
+  const localDateKey = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  };
+
+    const addDays = (date: Date, days: number) => {
+    const result = new Date(date);    
+    result.setDate(result.getDate() + days);
+    return result;
+  };
+
+  const todayKey = localDateKey(now);
+  const tomorrowKey = localDateKey(addDays(now, 1));
+  const dayAfterTomorrowKey = localDateKey(addDays(now, 2));
+  const [selectedDate, setSelectedDate] = useState(todayKey);
+
+ 
   const { settings } = useSettings();
   const { live, upcoming, finished, all, loading, error, isMockData, refresh } = useMatches(true, settings.refreshInterval);
   const [searchParams] = useSearchParams();
@@ -24,15 +48,65 @@ export function MatchesPage() {
     ? initialTab
     : 'live'
   );
-  const [selectedDate, setSelectedDate] = useState('');
+
   const [searchQuery, setSearchQuery] = useState('');
   const [compFilter, setCompFilter] = useState('');
+
+ const [selectedDateMatches, setSelectedDateMatches] = useState<Match[] | null>(null);
+ const [dateLoading, setDateLoading] = useState(false);
+ 
 
   const competitions = useMemo(() => {
     const map = new Map<string, string>();
     all.forEach(m => map.set(m.competition.id, m.competition.name));
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
   }, [all]);
+
+
+  const handleDateChange = async (date: string) => {
+    // Calendrier vidé
+    if (!date) {
+      setSelectedDate('');
+      setSelectedDateMatches(null);
+      setDateLoading(false);
+      return;
+    }
+
+    // Seulement aujourd'hui, demain et après-demain
+    if (date < todayKey || date > dayAfterTomorrowKey) {
+      return;
+    }
+
+    setSelectedDate(date);
+
+    // Aujourd'hui
+    if (date === todayKey) {
+      setActiveTab('upcoming');
+      setSelectedDateMatches(null);
+      setDateLoading(false);
+      return;
+    }
+
+    // Demain / après-demain
+    setActiveTab('upcoming');
+    setDateLoading(true);
+
+    try {
+      const result = await fetchMatchesByDate(date);
+
+      if (result.error || !result.data) {
+        setSelectedDateMatches([]);
+        return;
+      }
+
+      setSelectedDateMatches(result.data);
+    } catch (error) {
+      console.error('Erreur lors du chargement de la date :', error);
+      setSelectedDateMatches([]);
+    } finally {
+      setDateLoading(false);
+    }
+  };
 
   function filterMatches(matches: Match[]): Match[] {
     let result = matches;
@@ -49,8 +123,26 @@ export function MatchesPage() {
   }
 
   const filteredLive = filterMatches(live);
-  const filteredUpcoming = filterMatches(upcoming);
-  const filteredFinished = filterMatches(finished);
+
+  const upcomingSource =
+    selectedDateMatches !== null
+      ? selectedDateMatches
+      : upcoming;
+
+  const filteredUpcoming = filterMatches(
+    upcomingSource.filter((match) => {
+      const kickoffTime = new Date(match.kickoff).getTime();
+
+      if (Number.isNaN(kickoffTime)) {
+        return false;
+      }
+
+      return kickoffTime > Date.now();
+    })
+  );
+
+ const filteredFinished = filterMatches(finished);
+
 
   const groupedByCompetition = useMemo(() => {
     let source: Match[] = [];
@@ -68,11 +160,23 @@ export function MatchesPage() {
     return Array.from(groups.entries()).map(([id, g]) => ({ id, ...g }));
   }, [activeTab, filteredLive, filteredUpcoming, filteredFinished]);
 
-  const tabs = [
-    { key: 'live', label: 'En direct', count: live.length },
-    { key: 'upcoming', label: 'À venir', count: upcoming.length },
-    { key: 'finished', label: 'Terminés', count: finished.length },
-  ];
+ const tabs = [
+  {
+    key: 'live',
+    label: 'En direct',
+    count: filteredLive.length,
+  },
+  {
+    key: 'upcoming',
+    label: 'À venir',
+    count: filteredUpcoming.length,
+  },
+  {
+    key: 'finished',
+    label: 'Terminés',
+    count: filteredFinished.length,
+  },
+];
 
   const currentFiltered = activeTab === 'live' ? filteredLive : activeTab === 'upcoming' ? filteredUpcoming : filteredFinished;
 
@@ -105,7 +209,7 @@ export function MatchesPage() {
         activeTab={activeTab}
         onTabChange={(key) => setActiveTab(key as TabKey)}
         date={selectedDate}
-        onDateChange={setSelectedDate}
+        onDateChange={handleDateChange}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         competitionFilter={compFilter}
@@ -114,28 +218,38 @@ export function MatchesPage() {
         onRefresh={refresh}
       />
 
-      {currentFiltered.length === 0 ? (
-        <EmptyState
-          icon={Calendar}
-          title="Aucun match trouvé"
-          description="Aucun match ne correspond à vos filtres. Essayez de modifier la date, la compétition ou la recherche."
-        />
-      ) : activeTab === 'live' ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-3">
-          {filteredLive.map(match => (
-            <MatchCard key={match.id} match={match} />
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-5">
-          {groupedByCompetition.map(group => (
-            <div key={group.id}>
-              <p className="text-xs text-ndembo-muted uppercase tracking-wide mb-2 px-1">{group.compName}</p>
-              <MatchList matches={group.matches} showReminder={activeTab === 'upcoming'} />
-            </div>
-          ))}
-        </div>
-      )}
+      {dateLoading ? (
+          <LoadingSkeleton variant="list" count={8} />
+        ) : currentFiltered.length === 0 ? (
+          <EmptyState
+            icon={Calendar}
+            title="Aucun match trouvé"
+            description="Aucun match ne correspond à vos filtres. Essayez de modifier la date, la compétition ou la recherche."
+          />
+        ) : activeTab === 'live' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-3">
+            {filteredLive.map((match) => (
+              <MatchCard key={match.id} match={match} />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {groupedByCompetition.map((group) => (
+              <div key={group.id}>
+                <p className="text-xs text-ndembo-muted uppercase tracking-wide mb-2 px-1">
+                  {group.compName}
+                </p>
+
+                <MatchList
+                  matches={group.matches}
+                  showReminder={activeTab === 'upcoming'}
+                />
+              </div>
+            ))}
+          </div>
+        )}
     </div>
   );
 }
+
+

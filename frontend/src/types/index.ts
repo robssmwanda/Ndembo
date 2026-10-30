@@ -136,3 +136,13 @@ export async function fetchCountries(
     signal,
   );
 }
+
+export interface TeamDetails extends Team {
+  country?: string | null;
+  city?: string | null;
+}
+
+export interface TeamFixturesResponse {
+  team: TeamDetails;
+  fixtures: Match[];
+}

@@ -20,7 +20,7 @@ const DEFAULT_SETTINGS: Settings = {
   matchReminders: false,
   compactMode: false,
   autoRefresh: true,
-  refreshInterval: 30,
+  refreshInterval: 10,
 };
 
 interface SettingsContextValue {

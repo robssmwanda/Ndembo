@@ -12,6 +12,8 @@ interface MatchCardProps {
   compact?: boolean;
 }
 
+
+
 export function MatchCard({ match, compact = false }: MatchCardProps) {
   const isLive = match.status === 'live';
   const isFinished = match.status === 'finished';
@@ -40,7 +42,12 @@ export function MatchCard({ match, compact = false }: MatchCardProps) {
       {/* Teams and score */}
       <div className="space-y-2">
         <div className="flex items-center gap-2.5">
-          <TeamLogo name={match.homeTeam.name} shortName={match.homeTeam.shortName} size="sm" />
+         <TeamLogo
+  name={match.homeTeam.name}
+  shortName={match.homeTeam.shortName}
+  logo={match.homeTeam.logo}
+  size="sm"
+/>
           <span className={`text-sm flex-1 truncate ${homeWin && isFinished ? 'font-semibold text-ndembo-text' : 'text-ndembo-text'}`}>
             {match.homeTeam.name}
           </span>
@@ -51,7 +58,12 @@ export function MatchCard({ match, compact = false }: MatchCardProps) {
           )}
         </div>
         <div className="flex items-center gap-2.5">
-          <TeamLogo name={match.awayTeam.name} shortName={match.awayTeam.shortName} size="sm" />
+          <TeamLogo
+  name={match.awayTeam.name}
+  shortName={match.awayTeam.shortName}
+  logo={match.awayTeam.logo}
+  size="sm"
+/>
           <span className={`text-sm flex-1 truncate ${awayWin && isFinished ? 'font-semibold text-ndembo-text' : 'text-ndembo-text'}`}>
             {match.awayTeam.name}
           </span>

@@ -12,6 +12,9 @@ import { FavoritesPage } from '@/pages/FavoritesPage';
 import { StatisticsPage } from '@/pages/StatisticsPage';
 import { SearchPage } from '@/pages/SearchPage';
 import { SettingsPage } from '@/pages/SettingsPage';
+import TeamDetailsPage from './pages/TeamDetailsPage';
+
+
 
 function App() {
   return (
@@ -25,6 +28,7 @@ function App() {
               <Route path="/matches/:id" element={<MatchDetailsPage />} />
               <Route path="/competitions" element={<CompetitionsPage />} />
               <Route path="/competitions/:id" element={<CompetitionDetailsPage />} />
+              <Route path="/teams/:id" element={<TeamDetailsPage />} />
               <Route path="/standings" element={<StandingsPage />} />
               <Route path="/favorites" element={<FavoritesPage />} />
               <Route path="/statistics" element={<StatisticsPage />} />

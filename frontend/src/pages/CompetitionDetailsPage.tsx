@@ -6,9 +6,9 @@ import { fetchCompetitionById, fetchStandings } from '@/lib/api';
 import { MatchList } from '@/components/MatchList';
 import { StandingsTable } from '@/components/StandingsTable';
 import { CompetitionBadge } from '@/components/CompetitionBadge';
-import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
 import type { Competition, Standings } from '@/types';
+import LoadingState from '@/components/LoadingState';
 
 type TabKey = 'overview' | 'fixtures' | 'results' | 'standings';
 
@@ -54,7 +54,7 @@ export function CompetitionDetailsPage() {
     const controller = new AbortController();
     async function load() {
       setStandingsLoading(true);
-      const result = await fetchStandings(id!, controller.signal);
+      const result = await fetchStandings(id!, new Date().getFullYear(),controller.signal );
       setStandings(result.data ?? undefined);
       setStandingsLoading(false);
     }
@@ -63,12 +63,8 @@ export function CompetitionDetailsPage() {
   }, [id]);
 
   if (competitionLoading ||(loading && all.length === 0)) {
-    return (
-      <div className="space-y-4">
-        <div className="skeleton h-32 rounded-2xl" />
-        <LoadingSkeleton variant="list" count={5} />
-      </div>
-    );
+      return  <LoadingState />
+
   }
 
   if (!competition) {
