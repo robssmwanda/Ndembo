@@ -1,5 +1,7 @@
+
 import express from "express";
 import dotenv from "dotenv";
+
 import liveRoutes from "./routes/live.route.js";
 import upcomingRoutes from "./routes/upcoming.route.js";
 import finishedRoutes from "./routes/finished.route.js";
@@ -11,10 +13,27 @@ dotenv.config();
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://ndembo-frontend.onrender.com",
+];
+
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  const origin = req.headers.origin;
+
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+
+  res.setHeader("Vary", "Origin");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
 
   if (req.method === "OPTIONS") {
     return res.sendStatus(204);
@@ -22,6 +41,8 @@ app.use((req, res, next) => {
 
   next();
 });
+
+app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
