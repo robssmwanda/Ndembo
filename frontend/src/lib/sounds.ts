@@ -13,16 +13,41 @@ const audioElements = [
   redCardAudio,
 ];
 
-export function initAudio() {
-  audioElements.forEach((audio) => {
-    audio.preload = 'auto';
-    audio.load();
-  });
+let audioInitialized = false;
+
+export async function initAudio() {
+  if (audioInitialized) return;
+
+  try {
+    for (const audio of audioElements) {
+      audio.preload = 'auto';
+      audio.muted = true;
+      audio.currentTime = 0;
+
+      await audio.play();
+
+      audio.pause();
+      audio.currentTime = 0;
+      audio.muted = false;
+    }
+
+    audioInitialized = true;
+    console.log('Audio initialisé avec succès');
+  } catch (error) {
+    audioElements.forEach((audio) => {
+      audio.pause();
+      audio.muted = false;
+      audio.currentTime = 0;
+    });
+
+    console.error('Initialisation audio impossible :', error);
+  }
 }
 
 function playAudio(audio: HTMLAudioElement) {
   audio.pause();
   audio.currentTime = 0;
+  audio.muted = false;
 
   void audio.play().catch((error) => {
     console.error('Erreur de lecture audio :', error);
