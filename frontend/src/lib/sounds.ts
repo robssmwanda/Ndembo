@@ -13,25 +13,14 @@ const audioElements = [
   redCardAudio,
 ];
 
-let audioInitialized = false;
-
 export function initAudio() {
-  if (audioInitialized) return;
-
   audioElements.forEach((audio) => {
     audio.preload = 'auto';
     audio.load();
   });
-
-  audioInitialized = true;
 }
 
 function playAudio(audio: HTMLAudioElement) {
-  if (!audioInitialized) {
-    console.warn('Audio non initialisé : une interaction utilisateur est nécessaire.');
-    return;
-  }
-
   audio.pause();
   audio.currentTime = 0;
 
@@ -64,7 +53,6 @@ export function playRedCardSound() {
   playAudio(redCardAudio);
 }
 
-// Exposer la fonction de test en développement
 if (import.meta.env.DEV) {
   (window as any).testGoalSound = testGoalSound;
 }
