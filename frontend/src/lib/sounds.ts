@@ -12,74 +12,139 @@ type SoundName = keyof typeof soundFiles;
 let audioContext: AudioContext | null = null;
 
 const audioBuffers = new Map<SoundName, AudioBuffer>();
+const htmlAudio = new Map<SoundName, HTMLAudioElement>();
+
 const pendingSounds: SoundName[] = [];
 
-let audioLoading = false;
 let audioReady = false;
+let audioLoading = false;
+let htmlAudioReady = false;
 
 function getAudioContext(): AudioContext | null {
-  if (audioContext) return audioContext;
+  try {
+    if (audioContext) return audioContext;
 
-  const AudioContextClass =
-    window.AudioContext ||
-    (window as typeof window & {
-      webkitAudioContext?: typeof AudioContext;
-    }).webkitAudioContext;
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as typeof window & {
+        webkitAudioContext?: typeof AudioContext;
+      }).webkitAudioContext;
 
-  if (!AudioContextClass) {
-    console.error('Web Audio API non disponible');
+    if (!AudioContextClass) return null;
+
+    audioContext = new AudioContextClass();
+    return audioContext;
+  } catch (error) {
+    console.warn('AudioContext indisponible :', error);
     return null;
   }
-
-  audioContext = new AudioContextClass();
-  return audioContext;
 }
 
-function playAudioNow(name: SoundName) {
-  if (!audioContext || audioContext.state !== 'running') {
-    return false;
-  }
-
-  const buffer = audioBuffers.get(name);
-
-  if (!buffer) {
-    return false;
-  }
-
-  const source = audioContext.createBufferSource();
-  source.buffer = buffer;
-  source.connect(audioContext.destination);
-  source.start(0);
-
-  return true;
-}
-
-function playPendingSounds() {
-  if (!audioReady || !audioContext || audioContext.state !== 'running') {
-    return;
-  }
-
-  while (pendingSounds.length > 0) {
-    const name = pendingSounds.shift()!;
-
-    if (!playAudioNow(name)) {
-      pendingSounds.unshift(name);
-      break;
+// Méthode 1 : Web Audio API
+function playWithWebAudio(name: SoundName): boolean {
+  try {
+    if (!audioContext || audioContext.state !== 'running') {
+      return false;
     }
+
+    const buffer = audioBuffers.get(name);
+    if (!buffer) return false;
+
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioContext.destination);
+    source.start(0);
+
+    return true;
+  } catch (error) {
+    console.warn('Web Audio a échoué :', error);
+    return false;
   }
 }
 
+// Méthode 2 : HTML Audio
+function playWithHtmlAudio(name: SoundName): boolean {
+  try {
+    const template = htmlAudio.get(name);
+    if (!template) return false;
+
+    const audio = template.cloneNode(true) as HTMLAudioElement;
+    audio.volume = 1;
+    audio.currentTime = 0;
+
+    const promise = audio.play();
+
+    if (promise) {
+      promise.catch((error) => {
+        console.warn('Lecture HTML Audio bloquée :', error);
+
+        if (!pendingSounds.includes(name)) {
+          pendingSounds.push(name);
+        }
+      });
+    }
+
+    return true;
+  } catch (error) {
+    console.warn('HTML Audio a échoué :', error);
+    return false;
+  }
+}
+
+// Préparation des fichiers MP3
+function prepareHtmlAudio() {
+  try {
+    Object.entries(soundFiles).forEach(([name, url]) => {
+      const soundName = name as SoundName;
+
+      const audio = new Audio(url);
+      audio.preload = 'auto';
+
+      htmlAudio.set(soundName, audio);
+    });
+
+    htmlAudioReady = true;
+  } catch (error) {
+    console.error('Préparation HTML Audio impossible :', error);
+  }
+}
+
+// Lecture avec système de secours
+function playAudio(name: SoundName) {
+  if (playWithWebAudio(name)) return;
+
+  if (playWithHtmlAudio(name)) return;
+
+  if (!pendingSounds.includes(name)) {
+    pendingSounds.push(name);
+  }
+}
+
+// Rejouer les sons en attente
+function playPendingSounds() {
+  if (!pendingSounds.length) return;
+
+  const sounds = [...pendingSounds];
+  pendingSounds.length = 0;
+
+  sounds.forEach((name) => {
+    if (!playWithWebAudio(name) && !playWithHtmlAudio(name)) {
+      pendingSounds.push(name);
+    }
+  });
+}
+
+// Initialisation à déclencher après une interaction utilisateur
 export async function initAudio() {
+  prepareHtmlAudio();
+
   try {
     const context = getAudioContext();
 
-    if (!context) return;
+    // Appel immédiat pendant l'interaction utilisateur
+    const resumePromise = context?.resume();
 
-    // Cette instruction doit être appelée directement pendant
-    // une interaction utilisateur pour respecter les restrictions mobiles.
-    const resumePromise = context.resume();
-
-    if (!audioLoading && !audioReady) {
+    if (context && !audioLoading && !audioReady) {
       audioLoading = true;
 
       try {
@@ -103,33 +168,21 @@ export async function initAudio() {
         );
 
         audioReady = true;
-        console.log('Tous les sons NDEMBO sont chargés');
-
+        console.log('NDEMBO : sons Web Audio chargés');
       } catch (error) {
-        console.error('Erreur de chargement des sons :', error);
+        console.warn('Web Audio non disponible, HTML Audio sera utilisé :', error);
       } finally {
         audioLoading = false;
       }
     }
 
-    await resumePromise;
+    if (resumePromise) {
+      await resumePromise;
+    }
 
     playPendingSounds();
-
   } catch (error) {
-    console.error('Initialisation audio impossible :', error);
-  }
-}
-
-function playAudio(name: SoundName) {
-  // Si le son n'est pas encore chargé, on le met en attente.
-  if (!audioReady || !audioContext || audioContext.state !== 'running') {
-    pendingSounds.push(name);
-    return;
-  }
-
-  if (!playAudioNow(name)) {
-    pendingSounds.push(name);
+    console.warn('Initialisation audio :', error);
   }
 }
 
@@ -139,10 +192,6 @@ export function playGoalSound() {
 
 export function playVarSound() {
   playAudio('var');
-}
-
-export function testGoalSound() {
-  playGoalSound();
 }
 
 export function playYellowCardSound() {
@@ -155,6 +204,10 @@ export function playSubstitutionSound() {
 
 export function playRedCardSound() {
   playAudio('redCard');
+}
+
+export function testGoalSound() {
+  playGoalSound();
 }
 
 if (import.meta.env.DEV) {
