@@ -1,6 +1,8 @@
+
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { FavoritesProvider } from '@/lib/favorites';
 import { SettingsProvider } from '@/lib/settings';
+import { AudioInitializer } from '@/components/AudioInitializer';
 import { Layout } from '@/components/Layout';
 import { HomePage } from '@/pages/HomePage';
 import { MatchesPage } from '@/pages/MatchesPage';
@@ -14,13 +16,13 @@ import { SearchPage } from '@/pages/SearchPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import TeamDetailsPage from './pages/TeamDetailsPage';
 
-
-
 function App() {
   return (
     <SettingsProvider>
       <FavoritesProvider>
         <BrowserRouter>
+          <AudioInitializer />
+
           <Routes>
             <Route element={<Layout />}>
               <Route path="/" element={<HomePage />} />

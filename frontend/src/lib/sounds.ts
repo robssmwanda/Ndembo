@@ -1,65 +1,97 @@
 
-const goalAudio = new Audio('/sounds/but.mp3');
-const varAudio = new Audio('/sounds/var.mp3');
-const yellowCardAudio = new Audio('/sounds/yellow_card.mp3');
-const substitutionAudio = new Audio('/sounds/substitution.mp3');
-const redCardAudio = new Audio('/sounds/red_card.mp3');
+const soundFiles = {
+  goal: '/sounds/but.mp3',
+  var: '/sounds/var.mp3',
+  yellowCard: '/sounds/yellow_card.mp3',
+  substitution: '/sounds/substitution.mp3',
+  redCard: '/sounds/red_card.mp3',
+} as const;
 
-const audioElements = [
-  goalAudio,
-  varAudio,
-  yellowCardAudio,
-  substitutionAudio,
-  redCardAudio,
-];
+type SoundName = keyof typeof soundFiles;
 
-let audioInitialized = false;
+let audioContext: AudioContext | null = null;
+const audioBuffers = new Map<SoundName, AudioBuffer>();
+let audioLoading = false;
 
-export async function initAudio() {
-  if (audioInitialized) return;
-
+export function initAudio() {
   try {
-    for (const audio of audioElements) {
-      audio.preload = 'auto';
-      audio.muted = true;
-      audio.currentTime = 0;
+    if (!audioContext) {
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as typeof window & {
+          webkitAudioContext?: typeof AudioContext;
+        }).webkitAudioContext;
 
-      await audio.play();
+      if (!AudioContextClass) {
+        console.error('Web Audio API non disponible');
+        return;
+      }
 
-      audio.pause();
-      audio.currentTime = 0;
-      audio.muted = false;
+      audioContext = new AudioContextClass();
     }
 
-    audioInitialized = true;
-    console.log('Audio initialisé avec succès');
-  } catch (error) {
-    audioElements.forEach((audio) => {
-      audio.pause();
-      audio.muted = false;
-      audio.currentTime = 0;
-    });
+    // Appelé directement pendant l'interaction utilisateur.
+    const resumePromise = audioContext.resume();
 
+    if (!audioLoading) {
+      audioLoading = true;
+
+      void Promise.all(
+        Object.entries(soundFiles).map(async ([name, url]) => {
+          const response = await fetch(url);
+
+          if (!response.ok) {
+            throw new Error(`Impossible de charger ${url}`);
+          }
+
+          const data = await response.arrayBuffer();
+          const buffer = await audioContext!.decodeAudioData(data);
+
+          audioBuffers.set(name as SoundName, buffer);
+        })
+      )
+        .then(() => {
+          console.log('Tous les sons NDEMBO sont chargés');
+        })
+        .catch((error) => {
+          audioLoading = false;
+          console.error('Erreur de chargement des sons :', error);
+        });
+    }
+
+    void resumePromise.catch((error) => {
+      console.error('Impossible de démarrer AudioContext :', error);
+    });
+  } catch (error) {
     console.error('Initialisation audio impossible :', error);
   }
 }
 
-function playAudio(audio: HTMLAudioElement) {
-  audio.pause();
-  audio.currentTime = 0;
-  audio.muted = false;
+function playAudio(name: SoundName) {
+  if (!audioContext || audioContext.state !== 'running') {
+    console.warn('Audio non activé :', name);
+    return;
+  }
 
-  void audio.play().catch((error) => {
-    console.error('Erreur de lecture audio :', error);
-  });
+  const buffer = audioBuffers.get(name);
+
+  if (!buffer) {
+    console.warn('Son pas encore chargé :', name);
+    return;
+  }
+
+  const source = audioContext.createBufferSource();
+  source.buffer = buffer;
+  source.connect(audioContext.destination);
+  source.start(0);
 }
 
 export function playGoalSound() {
-  playAudio(goalAudio);
+  playAudio('goal');
 }
 
 export function playVarSound() {
-  playAudio(varAudio);
+  playAudio('var');
 }
 
 export function testGoalSound() {
@@ -67,15 +99,15 @@ export function testGoalSound() {
 }
 
 export function playYellowCardSound() {
-  playAudio(yellowCardAudio);
+  playAudio('yellowCard');
 }
 
 export function playSubstitutionSound() {
-  playAudio(substitutionAudio);
+  playAudio('substitution');
 }
 
 export function playRedCardSound() {
-  playAudio(redCardAudio);
+  playAudio('redCard');
 }
 
 if (import.meta.env.DEV) {
