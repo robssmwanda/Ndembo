@@ -1,6 +1,5 @@
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
-
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 function urlBase64ToUint8Array(base64String: string) {
@@ -18,8 +17,8 @@ export async function subscribeToPush() {
     throw new Error("Les notifications Push ne sont pas supportées.");
   }
 
-  if (!VAPID_PUBLIC_KEY) {
-    throw new Error("Clé VAPID publique manquante.");
+  if (!VAPID_PUBLIC_KEY || !API_URL) {
+    throw new Error("Configuration Push manquante.");
   }
 
   const permission = await Notification.requestPermission();
@@ -39,16 +38,29 @@ export async function subscribeToPush() {
     });
   }
 
-  const response = await fetch(`${API_URL}/api/push/subscribe`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(subscription),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
 
-  if (!response.ok) {
-    throw new Error("Impossible d'enregistrer l'abonnement Push.");
+  try {
+    const response = await fetch(`${API_URL}/api/push/subscribe`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(subscription),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erreur Backend : ${response.status}`);
+    }
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Le Backend ne répond pas (15 secondes).");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
 
   return subscription;
