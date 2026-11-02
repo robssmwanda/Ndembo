@@ -2,12 +2,15 @@
 import express from "express";
 import dotenv from "dotenv";
 
+import connectDB from "./config/database.js";
+
 import liveRoutes from "./routes/live.route.js";
 import upcomingRoutes from "./routes/upcoming.route.js";
 import finishedRoutes from "./routes/finished.route.js";
 import matchRoutes from "./routes/match.route.js";
 import competitionRoutes from "./routes/competition.route.js";
 import teamRoutes from "./routes/team.route.js";
+import pushRoutes from "./routes/push.route.js";
 
 dotenv.config();
 
@@ -52,12 +55,24 @@ app.use("/api/finished", finishedRoutes);
 app.use("/api/matches", matchRoutes);
 app.use("/api/competitions", competitionRoutes);
 app.use("/api/teams", teamRoutes);
+app.use("/api/push", pushRoutes);
+// Démarrage après connexion à MongoDB
+const startServer = async () => {
+  try {
+    await connectDB();
 
-app.listen(PORT, () => {
-  console.log(`🚀 Ndembo server is running on port ${PORT}.`);
-  console.log(
-    `🔑 API key loaded: ${
-      process.env.FOOTBALL_API_KEY ? "YES" : "NO"
-    }`
-  );
-});
+    app.listen(PORT, () => {
+      console.log(`🚀 Ndembo server is running on port ${PORT}.`);
+      console.log(
+        `🔑 API key loaded: ${
+          process.env.FOOTBALL_API_KEY ? "YES" : "NO"
+        }`
+      );
+    });
+  } catch (error) {
+    console.error("❌ Impossible de démarrer Ndembo :", error);
+    process.exit(1);
+  }
+};
+
+startServer();

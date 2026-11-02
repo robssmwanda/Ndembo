@@ -1,5 +1,6 @@
 import { Settings as SettingsIcon, Moon, Sun, Globe, Bell, RefreshCw, RotateCcw, Monitor } from 'lucide-react';
 import { useSettings, type Language, type ThemeMode } from '@/lib/settings';
+import { PushNotificationButton } from '@/components/PushNotificationButton';
 
 export function SettingsPage() {
   const { settings, updateSettings, resetSettings } = useSettings();
@@ -110,6 +111,12 @@ export function SettingsPage() {
             value={settings.matchReminders}
             onChange={(v) => updateSettings({ matchReminders: v })}
           />
+        </div>
+        <div className="pt-3 border-t border-ndembo-border">
+          <p className="text-sm text-ndembo-text mb-3">
+            Notifications Push sur téléphone
+          </p>
+          <PushNotificationButton />
         </div>
       </section>
 
