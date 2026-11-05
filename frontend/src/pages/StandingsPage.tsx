@@ -7,6 +7,7 @@ import { TeamLogo } from '@/components/TeamLogo';
 import { EmptyState } from '@/components/EmptyState';
 import { CompetitionBadge } from '@/components/CompetitionBadge';
 
+
 import type { Standings, StandingRow } from '@/types';
 
 type TabKey = 'standings' | 'matches' | 'stats' | 'teams';
@@ -770,22 +771,20 @@ const [selectedComp, setSelectedComp] = useState('');
               {activeTab === 'teams' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {standings.table.map((row) => (
-                    <Link
-                      key={row.team.id}
-                      to={`/teams/${row.team.id}?season=${selectedSeason}`}
-                      className="flex items-center gap-2.5 p-2.5 rounded-lg hover:bg-ndembo-cardHover transition-colors group"
-                    >
-                      <TeamLogo
-                        name={row.team.name}
-                        shortName={row.team.shortName}
-                        logo={row.team.logo}
-                        size="sm"
-                      />
-
-                      <span className="text-sm text-ndembo-text truncate group-hover:text-ndembo-neon transition-colors">
-                        {row.team.name}
-                      </span>
-                    </Link>
+                   <Link key={row.team.id}
+                    to={`/teams/${row.team.id}?season=${selectedSeason}`}
+                    className="flex items-center gap-2.5 p-2.5 rounded-lg hover:bg-ndembo-cardHover transition-colors group"
+                  >
+                    <TeamLogo
+                      name={row.team.name}
+                      shortName={row.team.shortName}
+                      logo={row.logo}
+                      size="sm"
+                    />
+                    <span className="text-sm text-ndembo-text whitespace-normal break-words group-hover:text-ndembo-neon transition-colors">
+                       {row.team.name}
+                  </span>
+                  </Link>
                   ))}
                 </div>
               )}

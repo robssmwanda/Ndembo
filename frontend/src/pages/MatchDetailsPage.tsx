@@ -143,41 +143,55 @@ export function MatchDetailsPage() {
             )}
           </div>
 
-          <div className="flex items-center justify-center gap-6 lg:gap-12">
+          <div className="flex items-center justify-center gap-2 sm:gap-6 lg:gap-12">
             {/* Home team */}
-            <div className="flex flex-col items-center gap-3 flex-1 max-w-[200px]">
-              <TeamLogo name={match.homeTeam.name} shortName={match.homeTeam.shortName} logo={match.homeTeam.logo} size="lg"/>
-              <span className="text-sm lg:text-base font-semibold text-ndembo-text text-center leading-tight">{match.homeTeam.name}</span>
+            <div className="flex flex-col items-center justify-start gap-2 sm:gap-3 flex-1 min-w-0 max-w-[130px] sm:max-w-[200px]">
+              <TeamLogo
+                name={match.homeTeam.name}
+                shortName={match.homeTeam.shortName}
+                logo={match.homeTeam.logo}
+                size="lg"
+              />
+              {/* Nom court sur mobile, nom complet sur écran plus large */}
+              <span className="sm:hidden text-xs font-semibold text-ndembo-text text-center leading-tight break-words">
+                {match.homeTeam.shortName || match.homeTeam.name}
+              </span>
+              <span className="hidden sm:block text-sm lg:text-base font-semibold text-ndembo-text text-center leading-tight break-words">
+                {match.homeTeam.name}
+              </span>
             </div>
 
             {/* Score */}
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-1 shrink-0">
               {hasScore ? (
-                <div className="flex items-center gap-3 lg:gap-4">
-                  <span className="text-3xl lg:text-5xl font-bold font-mono text-ndembo-text tabular-nums">{match.homeScore}</span>
-                  <span className="text-2xl lg:text-3xl text-ndembo-dim">-</span>
-                  <span className="text-3xl lg:text-5xl font-bold font-mono text-ndembo-text tabular-nums">{match.awayScore}</span>
+                <div className="flex items-center gap-1.5 sm:gap-3 lg:gap-4">
+                  <span className="text-2xl sm:text-3xl lg:text-5xl font-bold font-mono text-ndembo-text tabular-nums">{match.homeScore}</span>
+                  <span className="text-xl sm:text-2xl lg:text-3xl text-ndembo-dim">-</span>
+                  <span className="text-2xl sm:text-3xl lg:text-5xl font-bold font-mono text-ndembo-text tabular-nums">{match.awayScore}</span>
                 </div>
               ) : (
-                <div className="text-2xl lg:text-3xl font-bold font-mono text-ndembo-muted">VS</div>
+                <div className="text-xl sm:text-2xl lg:text-3xl font-bold font-mono text-ndembo-muted">VS</div>
               )}
               {isLive && match.minute && (
                 <span className="text-xs text-ndembo-live font-bold mt-1">{match.minute}</span>
               )}
-              <span className="text-xs text-ndembo-muted mt-1">
+              <span className="text-[10px] sm:text-xs text-ndembo-muted mt-1 text-center whitespace-nowrap">
                 {formatTime(match.kickoff)} · {formatDateLong(match.kickoff)}
               </span>
             </div>
 
             {/* Away team */}
-            <div className="flex flex-col items-center gap-3 flex-1 max-w-[200px]">
+            <div className="flex flex-col items-center justify-start gap-2 sm:gap-3 flex-1 min-w-0 max-w-[130px] sm:max-w-[200px]">
               <TeamLogo
                 name={match.awayTeam.name}
                 shortName={match.awayTeam.shortName}
                 logo={match.awayTeam.logo}
                 size="lg"
               />
-              <span className="text-sm lg:text-base font-semibold text-ndembo-text text-center leading-tight">
+              <span className="sm:hidden text-xs font-semibold text-ndembo-text text-center leading-tight break-words">
+                {match.awayTeam.shortName || match.awayTeam.name}
+              </span>
+              <span className="hidden sm:block text-sm lg:text-base font-semibold text-ndembo-text text-center leading-tight break-words">
                 {match.awayTeam.name}
               </span>
             </div>

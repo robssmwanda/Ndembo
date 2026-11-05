@@ -12,15 +12,13 @@ interface MatchCardProps {
   compact?: boolean;
 }
 
-
-
 export function MatchCard({ match, compact = false }: MatchCardProps) {
   const isLive = match.status === 'live';
   const isFinished = match.status === 'finished';
   const hasScore = match.homeScore !== null && match.awayScore !== null;
 
-  const homeWin = hasScore && (match.homeScore! > match.awayScore!);
-  const awayWin = hasScore && (match.awayScore! > match.homeScore!);
+  const homeWin = hasScore && match.homeScore! > match.awayScore!;
+  const awayWin = hasScore && match.awayScore! > match.homeScore!;
 
   return (
     <Link
@@ -29,7 +27,11 @@ export function MatchCard({ match, compact = false }: MatchCardProps) {
     >
       {/* Top row: competition + status */}
       <div className="flex items-center justify-between mb-3">
-        <CompetitionBadge name={match.competition.name} country={match.competition.country} />
+        <CompetitionBadge
+          name={match.competition.name}
+          country={match.competition.country}
+        />
+
         {isLive ? (
           <LiveIndicator minute={match.minute} />
         ) : (
@@ -41,34 +43,71 @@ export function MatchCard({ match, compact = false }: MatchCardProps) {
 
       {/* Teams and score */}
       <div className="space-y-2">
-        <div className="flex items-center gap-2.5">
-         <TeamLogo
-  name={match.homeTeam.name}
-  shortName={match.homeTeam.shortName}
-  logo={match.homeTeam.logo}
-  size="sm"
-/>
-          <span className={`text-sm flex-1 truncate ${homeWin && isFinished ? 'font-semibold text-ndembo-text' : 'text-ndembo-text'}`}>
+        {/* Home team */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="shrink-0">
+            <TeamLogo
+              name={match.homeTeam.name}
+              shortName={match.homeTeam.shortName}
+              logo={match.homeTeam.logo}
+              size="sm"
+            />
+          </div>
+
+          <span
+            className={`text-sm flex-1 min-w-0 truncate ${
+              homeWin && isFinished
+                ? 'font-semibold text-ndembo-text'
+                : 'text-ndembo-text'
+            }`}
+            title={match.homeTeam.name}
+          >
             {match.homeTeam.name}
           </span>
+
           {hasScore && (
-            <span className={`text-sm font-mono font-bold tabular-nums ${homeWin && isFinished ? 'text-ndembo-text' : 'text-ndembo-muted'}`}>
+            <span
+              className={`text-sm font-mono font-bold tabular-nums shrink-0 ${
+                homeWin && isFinished
+                  ? 'text-ndembo-text'
+                  : 'text-ndembo-muted'
+              }`}
+            >
               {match.homeScore}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2.5">
-          <TeamLogo
-  name={match.awayTeam.name}
-  shortName={match.awayTeam.shortName}
-  logo={match.awayTeam.logo}
-  size="sm"
-/>
-          <span className={`text-sm flex-1 truncate ${awayWin && isFinished ? 'font-semibold text-ndembo-text' : 'text-ndembo-text'}`}>
+
+        {/* Away team */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="shrink-0">
+            <TeamLogo
+              name={match.awayTeam.name}
+              shortName={match.awayTeam.shortName}
+              logo={match.awayTeam.logo}
+              size="sm"
+            />
+          </div>
+
+          <span
+            className={`text-sm flex-1 min-w-0 truncate ${
+              awayWin && isFinished
+                ? 'font-semibold text-ndembo-text'
+                : 'text-ndembo-text'
+            }`}
+            title={match.awayTeam.name}
+          >
             {match.awayTeam.name}
           </span>
+
           {hasScore && (
-            <span className={`text-sm font-mono font-bold tabular-nums ${awayWin && isFinished ? 'text-ndembo-text' : 'text-ndembo-muted'}`}>
+            <span
+              className={`text-sm font-mono font-bold tabular-nums shrink-0 ${
+                awayWin && isFinished
+                  ? 'text-ndembo-text'
+                  : 'text-ndembo-muted'
+              }`}
+            >
               {match.awayScore}
             </span>
           )}
@@ -85,6 +124,7 @@ export function MatchCard({ match, compact = false }: MatchCardProps) {
               </span>
             )}
           </div>
+
           <FavoriteButton
             id={match.id}
             type="match"

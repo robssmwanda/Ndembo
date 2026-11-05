@@ -396,14 +396,20 @@ const tabs = [
   /**
    * État de chargement.
    */
+  
   if (loading && all.length === 0) {
     return (
-      <div className="space-y-6">
-        <div className="skeleton h-64 rounded-2xl" />
-        <LoadingSkeleton
-          variant="card"
-          count={6}
-        />
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
+        <div className="relative flex items-center justify-center">
+          <div className="w-16 h-16 border-4 border-ndembo-border border-t-ndembo-neon rounded-full animate-spin" />
+          <span className="absolute text-ndembo-neon font-bold text-xs">
+            N
+          </span>
+        </div>
+
+        <p className="text-sm text-ndembo-muted animate-pulse">
+          Chargement des données NDEMBO...
+        </p>
       </div>
     );
   }
