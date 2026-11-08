@@ -183,8 +183,40 @@ const [dateLoading, setDateLoading] = useState(false);
           localDateKey(match.kickoff) === selectedDate
       );
     }
+    return [...result].sort((a, b) => {
+      const priorityA = a.competition?.name?.toLowerCase() ?? '';
+      const priorityB = b.competition?.name?.toLowerCase() ?? '';
 
-    return result;
+      const majorCompetitions = [
+          'premier league', // 🇬🇧 England
+          'la liga',       // 🇪🇸 Spain
+          'serie a',      // 🇮🇹 Italy
+          'bundesliga',  // 🇩🇪 Germany
+          'ligue 1',     // 🇫🇷 France
+          'champions league',  // 🌍 Champions League
+          'austrian bundesliga', // 🇦🇹 Austria
+          'jupiler pro league', // 🇧🇪 Belgium
+          'danish superliga',  // 🇩🇰 Denmark
+          'super league greece', // 🇬🇷 Greece
+          'eredivisie',        // 🇳🇱 Netherlands
+          'eliteserien',      // 🇳🇴 Norway
+          'primeira liga',    // 🇵🇹 Portugal
+          'scottish premiership', // 🏴 Scotland
+          'swiss super league',    // 🇨🇭 Switzerland
+        ];
+
+      const isMajorA = majorCompetitions.some((name) =>
+        priorityA.includes(name)
+      );
+
+      const isMajorB = majorCompetitions.some((name) =>
+        priorityB.includes(name)
+      );
+
+      return Number(isMajorB) - Number(isMajorA);
+    });
+        
+
   }, [live, activeFilter, selectedDate]);
 
   /**

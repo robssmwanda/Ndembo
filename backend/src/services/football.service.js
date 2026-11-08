@@ -1161,3 +1161,40 @@ export async function getTeamInfo(id) {
     city: venue?.city ?? null,
   };
 }
+
+
+
+export async function searchTeams(search) {
+  const query = String(search ?? "").trim();
+
+  if (query.length < 2) {
+    return [];
+  }
+
+  const response = await fetch(
+    `${API_URL}/teams?search=${encodeURIComponent(query)}`,
+    {
+      headers: {
+        "x-apisports-key": process.env.FOOTBALL_API_KEY,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Football API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (data.errors && Object.keys(data.errors).length > 0) {
+    throw new Error("Erreur lors de la recherche des équipes.");
+  }
+
+  return (data.response ?? []).map(({ team, venue }) => ({
+    id: String(team.id),
+    name: team.name,
+    logo: team.logo ?? null,
+    country: team.country ?? null,
+    city: venue?.city ?? null,
+  }));
+}

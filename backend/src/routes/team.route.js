@@ -1,5 +1,5 @@
 import express from "express";
-import { getTeamFixtures, getTeamInfo } from "../services/football.service.js";
+import { getTeamFixtures, getTeamInfo, searchTeams } from "../services/football.service.js";
 
 const router = express.Router();
 
@@ -39,6 +39,36 @@ router.get("/:id/fixtures", async (req, res) => {
   }
 });
 
+
+router.get("/search", async (req, res) => {
+  try {
+    const { search } = req.query;
+
+    if (!search || String(search).trim().length < 2) {
+      return res.status(400).json({
+        success: 0,
+        message: "Veuillez saisir au moins 2 caractères.",
+      });
+    }
+
+    const teams = await searchTeams(search);
+
+    res.json({
+      success: 1,
+      data: teams,
+    });
+  } catch (error) {
+    console.error("Erreur recherche équipes :", error);
+
+    res.status(500).json({
+      success: 0,
+      message: "Impossible de rechercher les équipes.",
+    });
+  }
+});
+
+
+
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -65,5 +95,6 @@ router.get("/:id", async (req, res) => {
     });
   }
 });
+
 
 export default router;

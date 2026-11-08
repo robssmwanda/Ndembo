@@ -775,13 +775,12 @@ const [selectedComp, setSelectedComp] = useState('');
                     to={`/teams/${row.team.id}?season=${selectedSeason}`}
                     className="flex items-center gap-2.5 p-2.5 rounded-lg hover:bg-ndembo-cardHover transition-colors group"
                   >
-                    <TeamLogo
+                   <TeamLogo
                       name={row.team.name}
-                      shortName={row.team.shortName}
                       logo={row.logo}
                       size="sm"
                     />
-                    <span className="text-sm text-ndembo-text whitespace-normal break-words group-hover:text-ndembo-neon transition-colors">
+           <span className="text-sm text-ndembo-text whitespace-normal break-words group-hover:text-ndembo-neon transition-colors">
                        {row.team.name}
                   </span>
                   </Link>
@@ -808,9 +807,12 @@ const [selectedComp, setSelectedComp] = useState('');
  * ------------------------------------------------------------
  */
 
+
+
+
 function RankingsTable({
   rows,
-  season
+  season,
 }: {
   rows: StandingRow[];
   season: number;
@@ -819,45 +821,20 @@ function RankingsTable({
 
   return (
     <div className="overflow-x-auto -mx-4 sm:-mx-5 px-4 sm:px-5">
-      <table className="w-full text-sm min-w-[680px]">
+      <table className="w-full text-sm min-w-[520px] table-auto">
         <thead>
           <tr className="text-ndembo-muted text-[10px] uppercase tracking-wide border-b border-ndembo-border">
-            <th className="py-3 px-2 text-center w-10">
-              #
-            </th>
-
-            <th className="py-3 px-3 text-left">
+            <th className="py-3 px-2 text-center w-10">#</th>
+            <th className="py-3 px-3 text-left min-w-[160px]">
               Team
             </th>
-
-            <th className="py-3 px-2 text-center w-12">
-              MP
-            </th>
-
-            <th className="py-3 px-2 text-center w-10">
-              W
-            </th>
-
-            <th className="py-3 px-2 text-center w-10">
-              D
-            </th>
-
-            <th className="py-3 px-2 text-center w-10">
-              L
-            </th>
-
-            <th className="py-3 px-2 text-center w-12">
-              GF
-            </th>
-
-            <th className="py-3 px-2 text-center w-12">
-              GA
-            </th>
-
-            <th className="py-3 px-2 text-center w-12">
-              GD
-            </th>
-
+            <th className="py-3 px-2 text-center w-12">MP</th>
+            <th className="py-3 px-2 text-center w-10">W</th>
+            <th className="py-3 px-2 text-center w-10">D</th>
+            <th className="py-3 px-2 text-center w-10">L</th>
+            <th className="py-3 px-2 text-center w-12">GF</th>
+            <th className="py-3 px-2 text-center w-12">GA</th>
+            <th className="py-3 px-2 text-center w-12">GD</th>
             <th className="py-3 px-2 text-center w-12 font-bold text-ndembo-text">
               Pts
             </th>
@@ -866,24 +843,18 @@ function RankingsTable({
 
         <tbody>
           {rows.map((row) => {
-            const isTopZone =
-              row.position <= 2;
-
-            const isMidZone =
-              row.position >= 3 &&
-              row.position <= 4;
-
+            const isTopZone = row.position <= 2;
+            const isMidZone = row.position >= 3 && row.position <= 4;
             const isRelegZone =
-              tableCount >= 6 &&
-              row.position >= tableCount - 1;
+              tableCount >= 6 && row.position >= tableCount - 1;
 
             const zoneColor = isTopZone
-              ? 'bg-ndembo-neon'
+              ? "bg-ndembo-neon"
               : isMidZone
-                ? 'bg-ndembo-accent'
+                ? "bg-ndembo-accent"
                 : isRelegZone
-                  ? 'bg-ndembo-live'
-                  : 'bg-transparent';
+                  ? "bg-ndembo-live"
+                  : "bg-transparent";
 
             return (
               <tr
@@ -891,13 +862,9 @@ function RankingsTable({
                 className="border-b border-ndembo-border/40 last:border-0 hover:bg-ndembo-cardHover transition-colors"
               >
                 {/* Position */}
-
                 <td className="py-3 px-2 text-center">
                   <div className="flex items-center justify-center gap-1.5">
-                    <span
-                      className={`w-1 h-4 rounded-full ${zoneColor}`}
-                    />
-
+                    <span className={`w-1 h-4 rounded-full ${zoneColor}`} />
                     <span className="text-ndembo-text font-mono text-xs font-semibold">
                       {row.position}
                     </span>
@@ -905,82 +872,82 @@ function RankingsTable({
                 </td>
 
                 {/* Team */}
+                <td className="py-3 px-2 min-w-[160px]">
+  <Link
+    to={`/teams/${row.team.id}?season=${season}`}
+    className="flex items-center gap-2 group min-w-[150px]"
+    style={{ textDecoration: "none" }}
+  >
+    <TeamLogo
+      name={row.team.name}
+      shortName={row.team.shortName}
+      logo={row.team.logo}
+      size="sm"
+    />
 
-                <td className="py-3 px-3">
-                  <Link
-                    to={`/teams/${row.team.id}?season=${season}`}
-                    className="flex items-center gap-2.5 group"
-                  >
-                   <TeamLogo
-                      name={row.team.name}
-                      shortName={row.team.shortName}
-                      logo={row.team.logo}
-                      size="sm"
-                    />
+    <span
+      className="text-ndembo-text text-xs font-semibold sm:hidden"
+      style={{ display: "inline-block", color: "#F5F7FA" }}
+    >
+      {(row.team.shortName || row.team.name).slice(0, 3).toUpperCase()}
+    </span>
 
-                    <span className="text-ndembo-text truncate group-hover:text-ndembo-neon transition-colors">
-                      {row.team.name}
-                    </span>
-                  </Link>
-                </td>
+    <span
+      className="hidden sm:inline text-ndembo-text text-[13px] font-medium"
+      style={{ color: "#F5F7FA" }}
+    >
+      {row.team.name}
+    </span>
+  </Link>
+</td>
 
                 {/* Played */}
-
                 <td className="py-3 px-2 text-center text-ndembo-text font-mono text-xs">
                   {row.played}
                 </td>
 
                 {/* Won */}
-
                 <td className="py-3 px-2 text-center text-ndembo-muted font-mono text-xs">
                   {row.won}
                 </td>
 
                 {/* Drawn */}
-
                 <td className="py-3 px-2 text-center text-ndembo-muted font-mono text-xs">
                   {row.drawn}
                 </td>
 
                 {/* Lost */}
-
                 <td className="py-3 px-2 text-center text-ndembo-muted font-mono text-xs">
                   {row.lost}
                 </td>
 
                 {/* Goals For */}
-
                 <td className="py-3 px-2 text-center text-ndembo-muted font-mono text-xs">
                   {row.goalsFor}
                 </td>
 
                 {/* Goals Against */}
-
                 <td className="py-3 px-2 text-center text-ndembo-muted font-mono text-xs">
                   {row.goalsAgainst}
                 </td>
 
                 {/* Goal Difference */}
-
                 <td className="py-3 px-2 text-center font-mono text-xs">
                   <span
                     className={
                       row.goalDifference > 0
-                        ? 'text-ndembo-neon'
+                        ? "text-ndembo-neon"
                         : row.goalDifference < 0
-                          ? 'text-ndembo-live'
-                          : 'text-ndembo-muted'
+                          ? "text-ndembo-live"
+                          : "text-ndembo-muted"
                     }
                   >
-                    {row.goalDifference > 0
-                      ? '+'
-                      : ''}
+                    {row.goalDifference > 0 ? "+" : ""}
                     {row.goalDifference}
                   </span>
                 </td>
 
                 {/* Points */}
-
                 <td className="py-3 px-2 text-center font-bold text-ndembo-text font-mono">
                   {row.points}
                 </td>
@@ -992,6 +959,7 @@ function RankingsTable({
     </div>
   );
 }
+
 
 /*
  * ------------------------------------------------------------

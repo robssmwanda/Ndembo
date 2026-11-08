@@ -32,7 +32,7 @@ export function RightSidebar({ competitions = [] }: RightSidebarProps) {
           <div className="space-y-2">
             {favTeams.slice(0, 4).map(team => (
               <Link key={team.id} to="/favorites" className="flex items-center gap-2 group">
-                <TeamLogo name={team.name} size="sm" />
+                <TeamLogo name={team.name} logo={team.logo} size="sm"/>
                 <span className="text-xs text-ndembo-text truncate group-hover:text-ndembo-neon transition-colors">{team.name}</span>
               </Link>
             ))}
