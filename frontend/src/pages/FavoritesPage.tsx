@@ -83,7 +83,8 @@ export function FavoritesPage() {
       const timeout = setTimeout(async () => {
         try {
 
-          const response = await fetch(`http://localhost:3000/api/teams/search?search=${encodeURIComponent(query)}`,
+          const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ndembo-backend-txqd.onrender.com';
+          const response = await fetch(`${API_BASE_URL}/api/teams/search?search=${encodeURIComponent(query)}`, 
             { signal: controller.signal }
           );
 
