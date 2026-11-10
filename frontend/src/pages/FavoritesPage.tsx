@@ -587,7 +587,7 @@ function AddTeamModal({
         {/* Team list */}
         <div className="flex-1 min-h-0 overflow-y-auto p-2 flex flex-col">
           {teams.length === 0 ? (
-            <div className="flex flex-1 flex-col items-center justify-center px-4 text-center -translate-y-6">
+            <div className="flex flex-1 flex-col items-center justify-center px-4 text-center -translate-y-8">
               {isSearchingTeams ? (
                 <>
                   <LoaderCircle
