@@ -5,7 +5,10 @@ const soundFiles = {
   yellowCard: '/sounds/yellow_card.mp3',
   substitution: '/sounds/substitution.mp3',
   redCard: '/sounds/red_card.mp3',
+  start: '/sounds/start.mp3',
+  end: '/sounds/end.mp3',
 } as const;
+
 
 type SoundName = keyof typeof soundFiles;
 
@@ -204,6 +207,14 @@ export function playSubstitutionSound() {
 
 export function playRedCardSound() {
   playAudio('redCard');
+}
+
+export function playStartMatchSound() {
+  playAudio('start');
+}
+
+export function playEndMatchSound() {
+  playAudio('end');
 }
 
 export function testGoalSound() {

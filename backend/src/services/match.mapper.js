@@ -24,6 +24,7 @@ export function mapLiveMatch(fixture) {
     kickoff: fixture.fixture.date,
 
     status: "live",
+    statusShort: fixture.fixture.status.short,
 
     minute:
       fixture.fixture.status.short === "HT"
@@ -78,6 +79,7 @@ export function mapUpcomingMatch(fixture) {
     kickoff: fixture.fixture.date,
 
     status: "upcoming",
+    statusShort: fixture.fixture.status.short,
 
     minute: null,
 
@@ -127,6 +129,7 @@ export function mapFinishedMatch(fixture) {
     kickoff: fixture.fixture.date,
 
     status: "finished",
+    statusShort: fixture.fixture.status.short,
 
     minute: null,
 

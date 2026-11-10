@@ -1,22 +1,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-
-import {
-  fetchMatches,
-  fetchLiveMatchEvents,
-  type ApiResult,
-  type MatchEvent,
-} from '@/lib/api';
-
+import { fetchMatches, fetchLiveMatchEvents, type ApiResult, type MatchEvent} from '@/lib/api';
 import type { MatchesResponse, Match } from '@/types';
-
-import {
-  playGoalSound,
-  playVarSound,
-  playYellowCardSound,
-  playRedCardSound,
-  playSubstitutionSound,
-} from '@/lib/sounds';
+import { playGoalSound, playVarSound, playYellowCardSound, playRedCardSound, playSubstitutionSound, playStartMatchSound, playEndMatchSound,} from '@/lib/sounds';
 
 interface UseMatchesResult {
   live: Match[];
@@ -58,6 +44,11 @@ export function useMatches(
   const [refreshKey, setRefreshKey] = useState(0);
 
   const mountedRef = useRef(true);
+
+  // Mémoire des anciens statuts des matchs
+  const previousStatusesRef = useRef(
+    new Map<string, string>()
+  );
 
   // Mémoire des anciens scores
   const previousScoresRef = useRef(
@@ -235,8 +226,61 @@ export function useMatches(
           // DÉTECTION DES BUTS : CONSERVÉE
           // =====================================
 
-          const previousScores = previousScoresRef.current;
+          
+        // =====================================
+        // DÉTECTION DU DÉBUT ET DE LA FIN DES MATCHS
+        // =====================================
 
+          const previousStatuses = previousStatusesRef.current;
+
+            const allStatusMatches = [
+              ...result.data.live,
+              ...result.data.upcoming,
+              ...result.data.finished,
+            ];
+
+            allStatusMatches.forEach((match) => {
+              const matchId = String(match.id);
+              const currentStatus = match.statusShort;
+              const previousStatus = previousStatuses.get(matchId);
+
+              if (!currentStatus) return;
+
+              // Première récupération : mémoriser sans jouer de son
+              if (!previousStatus) {
+                previousStatuses.set(matchId, currentStatus);
+                return;
+              }
+
+              // Coup d'envoi
+              if (
+                previousStatus === 'NS' &&
+                currentStatus === '1H'
+              ) {
+                playStartMatchSound();
+              }
+
+              // Reprise après la mi-temps
+              if (
+                previousStatus === 'HT' &&
+                currentStatus === '2H'
+              ) {
+                playStartMatchSound();
+              }
+
+              // Coup de sifflet final
+              if (
+                ['1H', '2H', 'ET'].includes(previousStatus) &&
+                ['FT', 'AET'].includes(currentStatus)
+              ) {
+                playEndMatchSound();
+              }
+
+              previousStatuses.set(matchId, currentStatus);
+            });
+
+          const previousScores = previousScoresRef.current;
+          
           result.data.live.forEach((match) => {
             const previous = previousScores.get(
               String(match.id)
@@ -288,7 +332,8 @@ export function useMatches(
           !(err instanceof DOMException &&
             err.name === 'AbortError')
         ) {
-          setError('Failed to load matches');
+          console.error('Erreur lors du chargement des matchs :', err);
+           setError('Failed to load matches');
         }
 
       } finally {
