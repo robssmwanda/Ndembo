@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Star, Calendar, Trophy, Trash2, Users, Sparkles, Plus, X, Search, Check } from 'lucide-react';
+import { Star, Calendar, Trophy, Trash2, Users, Sparkles, Plus, X, Search, Check, LoaderCircle } from 'lucide-react';
 import { useFavorites } from '@/lib/favorites';
 import { useMatches } from '@/lib/useMatches';
 import { TeamLogo } from '@/components/TeamLogo';
@@ -76,11 +76,12 @@ export function FavoritesPage() {
       }
 
       const controller = new AbortController();
+      setIsSearchingTeams(true);
+      setApiTeams([]);
+      setTeamSearchError('');
 
       const timeout = setTimeout(async () => {
         try {
-          setIsSearchingTeams(true);
-          setTeamSearchError('');
 
           const response = await fetch(`http://localhost:3000/api/teams/search?search=${encodeURIComponent(query)}`,
             { signal: controller.signal }
@@ -266,6 +267,8 @@ export function FavoritesPage() {
         <AddTeamModal
           teams={filteredTeams}
           searchQuery={searchQuery}
+          isSearchingTeams={isSearchingTeams}
+          teamSearchError={teamSearchError}
           onSearchChange={setSearchQuery}
           isFavorite={isFavorite}
           onAdd={(team) => {
@@ -514,13 +517,24 @@ interface TeamPick {
 interface AddTeamModalProps {
   teams: TeamPick[];
   searchQuery: string;
+  isSearchingTeams: boolean;
+  teamSearchError: string;
   onSearchChange: (q: string) => void;
   isFavorite: (id: string) => boolean;
   onAdd: (team: TeamPick) => void;
   onClose: () => void;
 }
 
-function AddTeamModal({ teams, searchQuery, onSearchChange, isFavorite, onAdd, onClose }: AddTeamModalProps) {
+function AddTeamModal({
+  teams,
+  searchQuery,
+  isSearchingTeams,
+  teamSearchError,
+  onSearchChange,
+  isFavorite,
+  onAdd,
+  onClose,
+}: AddTeamModalProps) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -573,8 +587,35 @@ function AddTeamModal({ teams, searchQuery, onSearchChange, isFavorite, onAdd, o
         <div className="flex-1 overflow-y-auto p-2">
           {teams.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
-              <Search size={28} className="text-ndembo-dim mb-3" />
-              <p className="text-sm text-ndembo-muted">Aucune équipe trouvée pour « {searchQuery} »</p>
+              {isSearchingTeams ? (
+                <>
+                  <LoaderCircle
+                    size={30}
+                    className="text-ndembo-neon mb-3 animate-spin"
+                    aria-hidden="true"
+                  />
+                  <p className="text-sm text-ndembo-muted">Recherche des équipes...</p>
+                </>
+              ) : teamSearchError ? (
+                <>
+                  <Search size={28} className="text-ndembo-live mb-3" />
+                  <p className="text-sm text-ndembo-live">{teamSearchError}</p>
+                </>
+              ) : searchQuery.trim().length < 2 ? (
+                <>
+                  <Search size={28} className="text-ndembo-dim mb-3" />
+                  <p className="text-sm text-ndembo-muted">
+                    Saisissez au moins 2 caractères pour rechercher une équipe.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Search size={28} className="text-ndembo-dim mb-3" />
+                  <p className="text-sm text-ndembo-muted">
+                    Aucune équipe trouvée pour « {searchQuery} »
+                  </p>
+                </>
+              )}
             </div>
           ) : (
             <div className="space-y-1">
