@@ -631,7 +631,7 @@ const tabs = [
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-3 w-full min-w-0">
             {filteredLive.map((match) => (
               <MatchCard
                 key={match.id}

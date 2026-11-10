@@ -23,8 +23,7 @@ export function MatchCard({ match, compact = false }: MatchCardProps) {
   return (
     <Link
       to={`/matches/${match.id}`}
-      className="block bg-ndembo-card border border-ndembo-border rounded-xl p-4 hover:border-ndembo-neon/30 hover:bg-ndembo-cardHover transition-all duration-200 group animate-fade-in"
-    >
+         className="block w-full min-w-0 bg-ndembo-card border border-ndembo-border rounded-xl p-4 hover:border-ndembo-neon/30 hover:bg-ndembo-cardHover transition-all duration-200 group animate-fade-in">
       {/* Top row: competition + status */}
       <div className="flex items-center justify-between mb-3">
         <CompetitionBadge

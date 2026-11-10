@@ -39,7 +39,7 @@ export function Header({ onMenuClick }: HeaderProps) {
       </button>
 
       {/* Search */}
-      <form onSubmit={handleSearch} className="flex-1 max-w-md">
+      <form onSubmit={handleSearch} className="flex-1 min-w-0 w-full">
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ndembo-muted" />
           <input
